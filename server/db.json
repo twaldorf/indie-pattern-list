@@ -3,7 +3,7 @@
         "id": 1,
         "pattern_name": "summer_sundress",
         "pattern_designer": "jane_doe",
-        "pattern_cost": 12.99,
+        "Price": 5,
         "pdf_or_print": "PDF",
         "sewing_difficulty": "intermediate",
         "yardage_required": "2.5 yards",
