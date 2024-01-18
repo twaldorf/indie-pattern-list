@@ -1,10 +1,8 @@
 [
     {
         "Price": [0, 5, 10, 15, 20],
-        "Format": ["PDF", "Print", "A4 Printing", "A0 Printing", "Projector"],
-        "Difficulty": ["Beginner", "Intermediate", "Advanced"],
-        "Size": [-5,-4,-3,-2,-1,0,1,2,3,4,5],
-        "Fabric Type": ["Woven", "Knit"],
-        "Sewalong Available?": ["Yes", "No"]
+        "Format": ["PDF", "Print", "Projector"],
+        "Size": [-1,0,1,2,3,4,5,6,7],
+        "Fabric Type": ["Woven", "Knit"]
     }
 ]

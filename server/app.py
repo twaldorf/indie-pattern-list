@@ -1,34 +1,46 @@
 from flask import Flask, jsonify
-import json
+import json, csv
 
 app = Flask(__name__)
 
-# Read patterns from the JSON file
-def get_patterns_from_db():
-    with open('db.json', 'r') as file:
-        patterns = json.load(file)
-    return patterns
-
 @app.route('/patterns', methods=['GET'])
-def get_patterns():
-	with open('db.json', 'r') as file:
-		data = json.load(file)
+def index():
+    patterns = read_csv('db.csv')
+    return jsonify(patterns) 
 
-	return jsonify(data)
+def read_csv(file_path):
+	patterns = []
+
+	with open(file_path, newline='', encoding='utf-8') as csvfile:
+			csv_reader = csv.DictReader(csvfile)
+			for row in csv_reader:
+				newrow = row
+				for col in row:
+					newrow[col] = newrow[col].split(',')
+				patterns.append(newrow)
+	return patterns
+
+# @app.route('/patterns', methods=['GET'])
+# def get_patterns():
+# 	with open('db.json', 'r') as file:
+# 		data = json.load(file)
+
+# 	return jsonify(data)
 
 @app.route('/schema', methods=['GET'])
 def get_filters():
+	# get column names
 	with open('schema.json', 'r') as file:
 		data = json.load(file)
 
 	return jsonify(data)
 
-@app.route('/pattern/<int:id>', methods=['GET'])
-def get_pattern(id):
-	patterns = get_patterns_from_db()
+@app.route('/pattern/<string:Image>', methods=['GET'])
+def get_pattern(Imagename):
+	patterns = read_csv('./db.csv') 
 	print(patterns)
 
-	pattern = next((p for p in patterns if p.get('id') == id), None )
+	pattern = next( (p for p in patterns if p.get('Image') == Imagename), None )
 
 	if pattern:
 		return jsonify(pattern)
