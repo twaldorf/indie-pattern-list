@@ -36,11 +36,10 @@ def get_filters():
 	return jsonify(data)
 
 @app.route('/pattern/<string:Image>', methods=['GET'])
-def get_pattern(Imagename):
+def get_pattern(Image):
 	patterns = read_csv('./db.csv') 
-	print(patterns)
 
-	pattern = next( (p for p in patterns if p.get('Image') == Imagename), None )
+	pattern = next( (p for p in patterns if p.get('Image') == Image), None )
 
 	if pattern:
 		return jsonify(pattern)
