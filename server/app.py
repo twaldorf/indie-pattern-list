@@ -48,5 +48,3 @@ def get_pattern(Image):
 
 if __name__ == "__main__":
     app.run(debug=False)
-
-app = Flask("main") 
