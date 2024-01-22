@@ -45,3 +45,6 @@ def get_pattern(Image):
 		return jsonify(pattern)
 	else:
 		return jsonify({'error': 'Pattern not found'}), 404
+
+if __name__ == "__main__":
+    app.run(debug=False)
