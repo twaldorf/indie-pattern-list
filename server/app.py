@@ -1,7 +1,10 @@
 from flask import Flask, jsonify
+from flask_cors import CORS
 import json, csv
 
 app = Flask(__name__)
+
+CORS(app, resources={r"/*": {"origins": "https://ips-client-git-main-twaldorf.vercel.app"}})
 
 @app.route('/patterns', methods=['GET'])
 def index():
