@@ -2,9 +2,11 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 import json, csv
 
+csv_path = 'db.csv'
+
 app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": "https://ips-client-git-main-twaldorf.vercel.app"}})
+CORS(app, resources={r"/*": {"origins": ["https://ips-client.vercel.app", "https://www.superpatternlist.com"]}})
 
 @app.route('/patterns', methods=['GET'])
 def index():
@@ -30,6 +32,18 @@ def read_csv(file_path):
 
 # 	return jsonify(data)
 
+def get_pattern_by_image(image_name):
+    with open(csv_path, 'r', newline='', encoding='utf-8') as csvfile:
+        csv_reader = csv.DictReader(csvfile)
+        for row in csv_reader:
+            if row['Image'] == image_name:
+                return row
+
+    # If no matching row is found, return None
+    return None
+
+
+
 @app.route('/schema', methods=['GET'])
 def get_filters():
 	# get column names
@@ -42,12 +56,11 @@ def get_filters():
 def get_pattern(Image):
 	patterns = read_csv('./db.csv') 
 
-	pattern = next( (p for p in patterns if p.get('Image') == Image), None )
+	pattern_data = get_pattern_by_image(Image)
 
-	if pattern:
-		return jsonify(pattern)
-	else:
+	if not pattern_data:
 		return jsonify({'error': 'Pattern not found'}), 404
+	return jsonify(pattern_data)
 
 if __name__ == "__main__":
     app.run(debug=False)
