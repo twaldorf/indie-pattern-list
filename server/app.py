@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 import json, csv
 
@@ -6,12 +6,39 @@ csv_path = 'db.csv'
 
 app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": ["https://ips-client.vercel.app", "https://www.superpatternlist.com"]}})
+origins = [
+	"https://ips-client.vercel.app",
+	"https://www.superpatternlist.com",
+	"http://localhost:5173"
+]
+
+CORS(app, resources={r"/*": {"origins": origins}})
+
 
 @app.route('/patterns', methods=['GET'])
 def index():
-    patterns = read_csv('db.csv')
-    return jsonify(patterns) 
+		# paginate
+		page_index = int(request.args.get('page', 1))
+		page_size = int(request.args.get('page_length', 50))
+		front = (page_index - 1) * page_size
+		back = front + page_size
+
+		patterns = read_csv('db.csv')[front : back]
+
+		#sort 
+		sortBy = request.args.get('SortBy')
+		
+		if sortBy == 'Cost':
+			for row in patterns:
+				if row['Cost'][0] != '':
+					row['Cost'] = float(row['Cost'][0]) 
+				else:
+					row['Cost'] = 0.0
+			if sortBy:
+				patterns.sort(key=lambda x: x.get( sortBy, ''))
+
+		return jsonify(patterns)
+
 
 def read_csv(file_path):
 	patterns = []
@@ -22,9 +49,11 @@ def read_csv(file_path):
 				newrow = row
 				for col in row:
 					newrow[col] = newrow[col].split(',')
+					newrow[col] = [entry.strip() for entry in newrow[col]]
 				patterns.append(newrow)
-	return patterns
 
+	return patterns
+	
 # @app.route('/patterns', methods=['GET'])
 # def get_patterns():
 # 	with open('db.json', 'r') as file:
@@ -51,6 +80,7 @@ def get_filters():
 		data = json.load(file)
 
 	return jsonify(data)
+
 
 @app.route('/pattern/<string:Image>', methods=['GET'])
 def get_pattern(Image):

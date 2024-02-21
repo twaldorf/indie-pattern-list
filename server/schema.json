@@ -1,8 +1,7 @@
 [
     {
-        "Price": [0, 5, 10, 15, 20],
-        "Format": ["PDF", "Print", "Projector"],
-        "Size": [-1,0,1,2,3,4,5,6,7],
-        "Fabric Type": ["Woven", "Knit"]
+        "Formats": ["PDF", "Print", "Projector"],
+        "Sizes": [-1,0,1,2,3,4,5,6,7],
+        "Fabrics": ["Woven", "Knit"]
     }
 ]
