@@ -19,7 +19,10 @@ CORS(app, resources={r"/*": {"origins": origins}})
 # connect to db
 client = MongoClient('mongodb://127.0.0.1:27017')
 db = client['patternlistdev']
+# the main production collection, which guarantees schema compliance and high detail and accuracy
 collection = db['patterns']
+# the collection where new user-uploaded patterns and updates are stored, the "pen"
+pen_collection = db['pen']
 
 @app.route('/patterns', methods=['GET'])
 def index():
@@ -56,7 +59,6 @@ def get_patterns_from_db():
 		pattern['_id'] = str(pattern['_id'])
 	
 	return patterns
-
 
 def read_csv(file_path):
 	patterns = []
@@ -102,7 +104,6 @@ def get_filters():
 
 	return jsonify(data)
 
-
 @app.route('/pattern/<string:_id>', methods=['GET'])
 def get_pattern(_id):
 	pattern_data = get_pattern_by_id(_id)
@@ -111,5 +112,31 @@ def get_pattern(_id):
 		return jsonify({'error': 'Pattern not found'}), 404
 	return jsonify(pattern_data)
 
+
+@app.route('/pattern/new', methods=['POST'])
+def set_pattern():
+	pattern = request.data
+	print(pattern)
+
+	if not pattern:
+		return jsonify({'error': 'Empty pattern'}), 403
+
+	if pattern:
+		pattern_status = pen_collection.insert_one(pattern)
+
+@app.route('/pattern/update', methods=['POST'])
+def update_pattern():
+	_id = request.args.get('_id')
+	pattern = request.data
+	print(pattern)
+
+	if not pattern:
+		return jsonify({'error': 'Empty pattern'}), 403
+
+	if pattern:
+		pattern_status = pen_collection.insert_one(pattern)
+		return 200
+
+	
 if __name__ == "__main__":
     app.run(debug=False)
