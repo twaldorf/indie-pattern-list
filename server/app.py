@@ -23,6 +23,8 @@ db = client['patternlistdev']
 collection = db['patterns']
 # the collection where new user-uploaded patterns and updates are stored, the "pen"
 pen_collection = db['pen']
+# the garbage collection 
+garbage_collection = db['garbage']
 
 @app.route('/patterns', methods=['GET'])
 def index():
@@ -115,7 +117,7 @@ def get_pattern(_id):
 
 @app.route('/pattern/new', methods=['POST'])
 def set_pattern():
-	pattern = request.data
+	pattern = request.json
 	print(pattern)
 
 	if not pattern:
@@ -123,19 +125,30 @@ def set_pattern():
 
 	if pattern:
 		pattern_status = pen_collection.insert_one(pattern)
+		print(pattern_status)
+	
+	return "", 201
 
 @app.route('/pattern/update', methods=['POST'])
 def update_pattern():
-	_id = request.args.get('_id')
-	pattern = request.data
-	print(pattern)
+	old_id = request.args.get('_id')
+	pattern = request.json
+	pattern['id_to_replace'] = old_id
+	new_pattern = dict((key, value) for key, value in pattern.items() if key != '_id')
+	print(new_pattern)
 
 	if not pattern:
 		return jsonify({'error': 'Empty pattern'}), 403
 
 	if pattern:
-		pattern_status = pen_collection.insert_one(pattern)
-		return 200
+		existing = pen_collection.find_one({'id_to_replace': old_id})
+		if existing:
+			pattern_status = pen_collection.update_one({'id_to_replace': old_id}, {'$set': new_pattern})
+		elif not existing:
+			pattern_status = pen_collection.insert_one(new_pattern)
+	
+	# POST does not return anything
+	return '', 201
 
 	
 if __name__ == "__main__":
