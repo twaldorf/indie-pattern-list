@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import json, csv
+import json, csv, os
 from pymongo import MongoClient
 from bson import ObjectId
 
@@ -17,7 +17,12 @@ origins = [
 CORS(app, resources={r"/*": {"origins": origins}})
 
 # connect to db
-client = MongoClient('mongodb://127.0.0.1:27017')
+mongo_uri = os.environ.get('MONGODB_URI')
+if not mongo_uri:
+	mongo_uri = 'mongodb://127.0.0.1:27017'
+
+client = MongoClient(mongo_uri)
+
 db = client['patternlistdev']
 # the main production collection, which guarantees schema compliance and high detail and accuracy
 collection = db['patterns']
