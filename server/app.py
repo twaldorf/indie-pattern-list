@@ -18,12 +18,18 @@ CORS(app, resources={r"/*": {"origins": origins}})
 
 # connect to db
 mongo_uri = os.environ.get('MONGODB_URI')
+db_name = 'dps-cluster'
+
 if not mongo_uri:
 	mongo_uri = 'mongodb://127.0.0.1:27017'
+	db_name = 'patternlistdev'
+
+# debug mongouri
+print(mongo_uri)
 
 client = MongoClient(mongo_uri)
 
-db = client['patternlistdev']
+db = client[db_name]
 # the main production collection, which guarantees schema compliance and high detail and accuracy
 collection = db['patterns']
 # the collection where new user-uploaded patterns and updates are stored, the "pen"
@@ -55,8 +61,6 @@ def index():
 					row['price'] = 0.0
 			if sortBy:
 				patterns.sort(key=lambda x: x.get( sortBy, ''))
-
-		print(patterns[0])
 
 		return jsonify(patterns)
 
