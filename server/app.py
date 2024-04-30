@@ -18,7 +18,7 @@ CORS(app, resources={r"/*": {"origins": origins}})
 
 # connect to db
 mongo_uri = os.environ.get('MONGODB_URI')
-db_name = 'dps-cluster'
+db_name = os.environ.get('DB_NAME')
 
 if not mongo_uri:
 	mongo_uri = 'mongodb://127.0.0.1:27017'
