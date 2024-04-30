@@ -41,6 +41,9 @@ def index():
 
 		patterns = get_patterns_from_db()[front : back]
 
+		if not patterns:
+			print("no patterns retrieved from db")
+
 		#sort 
 		sortBy = request.args.get('SortBy')
 		
@@ -52,6 +55,8 @@ def index():
 					row['price'] = 0.0
 			if sortBy:
 				patterns.sort(key=lambda x: x.get( sortBy, ''))
+
+		print(patterns[0])
 
 		return jsonify(patterns)
 
