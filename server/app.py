@@ -3,6 +3,7 @@ from flask_cors import CORS
 import json, csv, os
 from pymongo import MongoClient
 from bson import ObjectId
+from db_operations import get_pattern_by_id, get_patterns_from_db
 
 csv_path = 'db.csv'
 
@@ -24,10 +25,9 @@ if not mongo_uri:
 	mongo_uri = 'mongodb://127.0.0.1:27017'
 	db_name = 'patternlistdev'
 
-# debug mongouri
-print(mongo_uri)
-
 client = MongoClient(mongo_uri)
+
+print(mongo_uri, db_name)
 
 db = client[db_name]
 # the main production collection, which guarantees schema compliance and high detail and accuracy
@@ -45,7 +45,39 @@ def index():
 		front = (page_index - 1) * page_size
 		back = front + page_size
 
-		patterns = get_patterns_from_db()[front : back]
+		patterns = get_patterns_from_db(collection)[front : back]
+
+		if not patterns:
+			print("no patterns retrieved from db")
+
+		#sort 
+		sortBy = request.args.get('SortBy')
+		
+		if sortBy == 'price':
+			sort_by_price(patterns, sortBy)
+
+		return jsonify(patterns)
+
+def sort_by_price(patterns, sortBy):
+	for row in patterns:
+		if row['price'][0] != '':
+			row['price'] = float( row['price'].replace("$", "") )
+		else:
+			row['price'] = 0.0
+	if sortBy:
+		patterns.sort( key=lambda x: x.get( sortBy, '') )
+	for row in patterns:
+		row['price'] = "${:.2f}".format( row['price'] )
+
+@app.route('/pen', methods=['GET'])
+def pen_index():
+		# paginate
+		page_index = int(request.args.get('page', 1))
+		page_size = int(request.args.get('page_length', 50))
+		front = (page_index - 1) * page_size
+		back = front + page_size
+
+		patterns = get_patterns_from_db(pen_collection)[front : back]
 
 		if not patterns:
 			print("no patterns retrieved from db")
@@ -64,32 +96,6 @@ def index():
 
 		return jsonify(patterns)
 
-def prep_patterns(patterns):
-	for pattern in patterns:
-		pattern['_id'] = str(pattern['_id'])
-	return patterns
-
-def get_patterns_from_db():
-	patterns = list(collection.find({}))
-	for pattern in patterns:
-		pattern['_id'] = str(pattern['_id'])
-	
-	return patterns
-
-def read_csv(file_path):
-	patterns = []
-
-	with open(file_path, newline='', encoding='utf-8') as csvfile:
-			csv_reader = csv.DictReader(csvfile)
-			for row in csv_reader:
-				newrow = row
-				for col in row:
-					newrow[col] = newrow[col].split(',')
-					newrow[col] = [entry.strip() for entry in newrow[col]]
-				patterns.append(newrow)
-
-	return patterns
-	
 # @app.route('/patterns', methods=['GET'])
 # def get_patterns():
 # 	with open('db.json', 'r') as file:
@@ -107,10 +113,6 @@ def read_csv(file_path):
 #     # If no matching row is found, return None
 #     return None
 
-def get_pattern_by_id(id):
-	pattern = collection.find_one({'_id': ObjectId(id)})
-	pattern['_id'] = str(pattern['_id'])
-	return pattern
 
 @app.route('/schema', methods=['GET'])
 def get_filters():
@@ -122,7 +124,15 @@ def get_filters():
 
 @app.route('/pattern/<string:_id>', methods=['GET'])
 def get_pattern(_id):
-	pattern_data = get_pattern_by_id(_id)
+	pattern_data = get_pattern_by_id(_id, collection)
+
+	if not pattern_data:
+		return jsonify({'error': 'Pattern not found'}), 404
+	return jsonify(pattern_data)
+
+@app.route('/pen/pattern/<string:_id>', methods=['GET'])
+def get_pen_pattern(_id):
+	pattern_data = get_pattern_by_id(_id, pen_collection)
 
 	if not pattern_data:
 		return jsonify({'error': 'Pattern not found'}), 404
