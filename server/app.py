@@ -3,7 +3,7 @@ from flask_cors import CORS
 import json, csv, os
 from pymongo import MongoClient
 from bson import ObjectId
-from db_operations import get_pattern_by_id, get_patterns_from_db
+from db_operations import get_pattern_by_id, get_patterns_from_db, upsert_pattern
 
 csv_path = 'db.csv'
 
@@ -142,6 +142,7 @@ def get_pen_pattern(_id):
 @app.route('/pattern/new', methods=['POST'])
 def set_pattern():
 	pattern = request.json
+	
 	print(pattern)
 
 	if not pattern:
@@ -157,7 +158,7 @@ def set_pattern():
 def update_pattern():
 	old_id = request.args.get('_id')
 	pattern = request.json
-	pattern['id_to_replace'] = old_id
+	pattern['id_to_replace'] = ObjectId(old_id)
 	new_pattern = dict((key, value) for key, value in pattern.items() if key != '_id')
 	print(new_pattern)
 
@@ -165,15 +166,40 @@ def update_pattern():
 		return jsonify({'error': 'Empty pattern'}), 403
 
 	if pattern:
-		existing = pen_collection.find_one({'id_to_replace': old_id})
+		existing = pen_collection.find_one({'id_to_replace': ObjectId(old_id)})
 		if existing:
-			pattern_status = pen_collection.update_one({'id_to_replace': old_id}, {'$set': new_pattern})
+			pattern_status = pen_collection.update_one({'id_to_replace': ObjectId(old_id)}, {'$set': new_pattern})
 		elif not existing:
 			pattern_status = pen_collection.insert_one(new_pattern)
 	
 	# POST does not return anything
 	return '', 201
 
+
+@app.route('/pen/<string:_id>', methods=['DELETE'])
+def delete_pattern(_id):
+	pattern = pen_collection.find_one({'_id': ObjectId(_id)})
+
+	if not pattern:
+		return jsonify({'error': 'Pattern not found'}), 404
+
+	pen_collection.delete_one({'_id': ObjectId(_id)})
+
+	return '', 204
+
+@app.route('/approve/<string:_id>', methods=['POST'])
+def apply_pattern(_id):
+	pattern = pen_collection.find_one({'_id': ObjectId(_id)})
+
+	if not pattern:
+		return jsonify({'error': 'Pattern not found'}), 404
+	
+	# send this to a prep_incoming_pattern function
+	pattern['_id'] = ObjectId(pattern['id_to_replace'])
+
+	upsert_pattern(pattern, collection)
+
+	return '', 201
 	
 if __name__ == "__main__":
     app.run(debug=False)
