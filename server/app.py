@@ -3,7 +3,7 @@ from flask_cors import CORS
 import json, csv, os
 from pymongo import MongoClient
 from bson import ObjectId
-from db_operations import get_pattern_by_id, get_patterns_from_db, upsert_pattern
+from db_operations import get_pattern_by_id, get_patterns_from_db, search_collection_for_query, upsert_pattern
 
 csv_path = 'db.csv'
 
@@ -200,6 +200,18 @@ def apply_pattern(_id):
 	upsert_pattern(pattern, collection)
 
 	return '', 201
+
+@app.route('/patterns/search', methods=['GET'])
+def search_patterns():
+	query = request.args.get('query')
+	if not query:
+		return jsonify([])
+	
+	patterns = search_collection_for_query(query, collection)
+	if not patterns:
+		return jsonify([])
+	
+	return jsonify(patterns)
 	
 if __name__ == "__main__":
     app.run(debug=False)
