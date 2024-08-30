@@ -195,7 +195,8 @@ def apply_pattern(_id):
 		return jsonify({'error': 'Pattern not found'}), 404
 	
 	# send this to a prep_incoming_pattern function
-	pattern['_id'] = ObjectId(pattern['id_to_replace'])
+	if ('id_to_replace' in pattern):
+		pattern['_id'] = ObjectId(pattern['id_to_replace'])
 
 	upsert_pattern(pattern, collection)
 
