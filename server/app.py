@@ -187,6 +187,15 @@ def delete_pattern(_id):
 
 	return '', 204
 
+@app.route('/patterns/delete/<string:_id>', methods=['DELETE'])
+def delete_pattern_from_main(_id):
+	pattern = collection.delete_one({'_id': ObjectId(_id)})
+
+	if not pattern:
+		return jsonify({'error': 'Pattern not found'}), 404
+	
+	return '', 204
+
 @app.route('/approve/<string:_id>', methods=['POST'])
 def apply_pattern(_id):
 	pattern = pen_collection.find_one({'_id': ObjectId(_id)})
