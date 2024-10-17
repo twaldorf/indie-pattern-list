@@ -3,7 +3,7 @@ from flask_cors import CORS
 import json, csv, os
 from pymongo import MongoClient
 from bson import ObjectId
-from db_operations import get_pattern_by_id, get_patterns_from_db, search_collection_for_query, upsert_pattern
+from db_operations import get_count_from_db, get_pattern_by_id, get_patterns_from_db, search_collection_for_query, upsert_pattern
 
 csv_path = 'db.csv'
 
@@ -41,7 +41,7 @@ garbage_collection = db['garbage']
 def index():
 		# paginate
 		page_index = int(request.args.get('page', 1))
-		page_size = int(request.args.get('page_length', 50))
+		page_size = int(request.args.get('page_length', 55))
 		front = (page_index - 1) * page_size
 		back = front + page_size
 
@@ -56,7 +56,20 @@ def index():
 		if sortBy == 'price':
 			sort_by_price(patterns, sortBy)
 
-		return jsonify(patterns)
+		count_all = get_count_from_db(collection)
+
+		response = {
+			'metadata': {
+				'patterns_returned': len(patterns),
+				'total_patterns': count_all,
+				'page': front
+			},
+			'data': patterns
+		}
+
+		debug_response = {}
+
+		return jsonify(response)
 
 def sort_by_price(patterns, sortBy):
 	for row in patterns:
@@ -221,7 +234,14 @@ def search_patterns():
 	if not patterns:
 		return jsonify([])
 	
-	return jsonify(patterns)
+	response = {
+		"data": patterns,
+		"metadata": {
+			"count": len(patterns)
+		}
+	}
+
+	return jsonify(response)
 	
 if __name__ == "__main__":
     app.run(debug=False)

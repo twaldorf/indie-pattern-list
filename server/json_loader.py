@@ -4,7 +4,7 @@ from pymongo import MongoClient
 # env = os.environ.get('FLASK_ENV')
 
 # Extract data from source
-file_path = './fpc_data_mega_built_image_urls.json'
+file_path = './mnm_all_ai_url_imageids.json'
 
 patterns = []
 
@@ -18,8 +18,8 @@ client = MongoClient('mongodb://127.0.0.1:27017')
 db = client['patternlistdev']
 collection = db['patterns']
 
-res = collection.delete_many({})
-print(res)
+# res = collection.delete_many({})
+# print(res)
 
 # res = collection.update_many(
 #   {}, { "$rename": { "price": "Cost", "designer": "Designer", "fabric_req": "Fabrics" } }

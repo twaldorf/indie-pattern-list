@@ -7,6 +7,10 @@ def get_patterns_from_db(collection):
 	
 	return patterns
 
+def get_count_from_db(collection):
+	count = collection.count_documents({})
+	return count
+
 
 def get_pattern_by_id(id, collection):
 	pattern = collection.find_one({'_id': ObjectId(id)})
