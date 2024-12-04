@@ -75,35 +75,38 @@ def create_app(test_config=None):
 			front = (page_index - 1) * page_size
 			back = front + page_size
 
-			patterns = get_patterns_from_db(collection)[front : back]
+			# Get all patterns from collection
+			patterns = get_patterns_from_db(collection)
 
+			# Filter: Category
 			category = request.args.get('category', None)
-
 			if (category is not None):
 				cat_patterns = [ pattern for pattern in patterns if pattern['category'] == category ]
 				patterns = cat_patterns
 
-			if not patterns:
+			# Sort: Price
+			sortBy = request.args.get('SortBy')
+			if sortBy == 'price':
+				sort_by_price(page_of_patterns, sortBy)
+
+			# Create the requested page
+			page_of_patterns = patterns[front : back]
+
+			if not page_of_patterns:
 				print("no patterns retrieved from db")
 
-			#sort 
-			sortBy = request.args.get('SortBy')
-			
-			if sortBy == 'price':
-				sort_by_price(patterns, sortBy)
-
+			# Build metadata: count all patterns in db
 			count_all = get_count_from_db(collection)
 
 			response = {
 				'metadata': {
-					'patterns_returned': len(patterns),
+					'patterns_returned': len(page_of_patterns),
 					'total_patterns': count_all,
+					'matching_patterns_count': len(patterns),
 					'page': page_index
 				},
 				'data': patterns
 			}
-
-			debug_response = {}
 
 			return jsonify(response)
 
