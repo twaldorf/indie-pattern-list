@@ -71,11 +71,17 @@ def create_app(test_config=None):
 			# paginate
 			page_index = int(request.args.get('page', 1))
 			print(request.args)
-			page_size = int(request.args.get('page_length', 55))
+			page_size = int(request.args.get('page_length', 54))
 			front = (page_index - 1) * page_size
 			back = front + page_size
 
 			patterns = get_patterns_from_db(collection)[front : back]
+
+			category = request.args.get('category', None)
+
+			if (category is not None):
+				cat_patterns = [ pattern for pattern in patterns if pattern['category'] == category ]
+				patterns = cat_patterns
 
 			if not patterns:
 				print("no patterns retrieved from db")
