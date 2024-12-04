@@ -1,7 +1,7 @@
 from bson import ObjectId
 
 def get_patterns_from_db(collection):
-	patterns = list(collection.find({}))
+	patterns = list(collection.find({}).sort('_id', -1))
 	for pattern in patterns:
 		prepare_outgoing_pattern(pattern)
 	
