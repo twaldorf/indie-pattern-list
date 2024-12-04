@@ -4,6 +4,7 @@ import json, csv, os
 from pymongo import MongoClient
 from bson import ObjectId
 from .db_operations import get_count_from_db, get_pattern_by_id, get_patterns_from_db, search_collection_for_query, upsert_pattern
+from collections import defaultdict
 
 # move to config file
 # csv_path = 'db.csv'
@@ -48,6 +49,7 @@ def init_db(test_config=None):
 	}
 	return db_package
 
+# App Factory for production, debug, and test
 def create_app(test_config=None):
 	app = Flask(__name__)
 	CORS(app, resources={r"/*": {"origins": origins}})
@@ -57,6 +59,7 @@ def create_app(test_config=None):
 	else:
 		db_package = init_db(test_config)
 
+	# TODO: Condense these, include app. prefix in all functions
 	collection = db_package['COLLECTION']
 	pen_collection = db_package['PEN']
 	garbage_collection = db_package['GARBAGE']
@@ -68,19 +71,12 @@ def create_app(test_config=None):
 	
 	@app.route('/patterns', methods=['GET'])
 	def index():
-			# paginate
-			page_index = int(request.args.get('page', 1))
-			print(request.args)
-			page_size = int(request.args.get('page_length', 54))
-			front = (page_index - 1) * page_size
-			back = front + page_size
-
 			# Get all patterns from collection
-			patterns = get_patterns_from_db(collection)
+			patterns = get_patterns_from_db(app.collection)
 
 			# Filter: Category
 			category = request.args.get('category', None)
-			if (category is not None):
+			if (category):
 				cat_patterns = [ pattern for pattern in patterns if pattern['category'] == category ]
 				patterns = cat_patterns
 
@@ -89,13 +85,21 @@ def create_app(test_config=None):
 			if sortBy == 'price':
 				sort_by_price(page_of_patterns, sortBy)
 
-			# Create the requested page
+			# Pages: Set up pagination parameters
+			page_index = int(request.args.get('page', 1))
+			page_size = int(request.args.get('page_length', 54))
+			front = (page_index - 1) * page_size
+			back = front + page_size
+
+			# Pages: Select only the requested page
 			page_of_patterns = patterns[front : back]
 
+			# No patterns: debug
 			if not page_of_patterns:
 				print("no patterns retrieved from db")
 
-			# Build metadata: count all patterns in db
+			print(len(page_of_patterns))
+			# Count all patterns in db
 			count_all = get_count_from_db(collection)
 
 			response = {
@@ -105,7 +109,7 @@ def create_app(test_config=None):
 					'matching_patterns_count': len(patterns),
 					'page': page_index
 				},
-				'data': patterns
+				'data': page_of_patterns
 			}
 
 			return jsonify(response)
@@ -120,6 +124,56 @@ def create_app(test_config=None):
 			patterns.sort( key=lambda x: x.get( sortBy, '') )
 		for row in patterns:
 			row['price'] = "${:.2f}".format( row['price'] )
+
+	# Return a limit view of patterns, by category, with extra metadata
+	@app.route('/patterns/summary', methods=['GET'])
+	def get_summary():
+		# Limited View: get param
+		limit = request.args.get('limit')
+
+		# Get all patterns from db
+		patterns = get_patterns_from_db(app.collection)
+
+		# Metadata: Count the number of patterns for each category
+		# Initialize a dict of counters at 0
+		categories = defaultdict(int)
+		patterns_by_category = {}
+
+		# Count every pattern, adding categories as they are discovered
+		for pattern in patterns:
+			cat = pattern.get('category')
+
+			# Increment the count
+			categories[cat] = categories.setdefault(cat, 0) + 1
+
+			# Add the category to the dict if it does not yet exist
+			if cat not in patterns_by_category:
+				patterns_by_category[cat] = []
+
+			if limit and categories[cat] < limit:
+				patterns_by_category[cat].append(pattern)
+			elif not limit:
+				patterns_by_category[cat].append(pattern)
+
+		# Limited View: Serve only a limited number of patterns
+		if limit:
+			patterns = patterns[0 : limit]
+
+		# Metadata: Count all patterns in db
+		count_all = get_count_from_db(collection)
+
+		response = {
+				'metadata': {
+					'patterns_returned': len(patterns),
+					'total_patterns': count_all,
+					'matching_patterns_count': len(patterns),
+					'page': 0,
+					'pattern_count_by_category': categories
+				},
+				'data': patterns_by_category
+			}
+
+		return jsonify(response)	
 
 	@app.route('/pen', methods=['GET'])
 	def pen_index():
