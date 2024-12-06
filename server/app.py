@@ -3,7 +3,7 @@ from flask_cors import CORS
 import json, csv, os
 from pymongo import MongoClient
 from bson import ObjectId
-from .db_operations import get_count_from_db, get_pattern_by_id, get_patterns_from_db, search_collection_for_query, upsert_pattern
+from db_operations import get_count_from_db, get_pattern_by_id, get_patterns_from_db, search_collection_for_query, upsert_pattern
 from collections import defaultdict
 
 # move to config file
