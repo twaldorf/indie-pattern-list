@@ -6,7 +6,10 @@ def load_json(file_path=None, collection=None):
 
   # Extract data from source
   if not file_path:
-    file_path = './uploads/cc.json'
+    file_path = './uploads/'
+
+  filename = input('Filename:')
+  file_path = file_path + filename
 
   patterns = []
 
@@ -29,13 +32,19 @@ def load_json(file_path=None, collection=None):
   # )
   print('Inserting into collection')
 
-  if patterns.items():
-    for pattern, value in patterns.items():
-      res = collection.insert_one(value)
-      print(res)
-  else:
-    for value in patterns:
-      res = collection.insert_one(value)
+  for pattern in patterns:
+    existing = collection.find({'title': pattern['title']})
+    if len(list(existing)) > 0:
+      for ep in existing:
+        for attribute in pattern:
+          ep[attribute] = pattern[attribute]
+        update = { '$set': ep }
+        res = collection.update_one({'_id': ep['_id']}, update)
+        print(ep['title'])
+        print(res)
+    else:
+      res = collection.insert_one(pattern)
+      print(pattern['title'])
       print(res)
 
 
