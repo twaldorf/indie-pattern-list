@@ -343,6 +343,6 @@ def create_app(test_config=None):
 	# factory makes an app
 	return app
 	
-if __name__ == "__main__":
+if __name__ != "__main__":
 	app = create_app()
 	app.run(debug=False)
