@@ -3,10 +3,10 @@ from bson import ObjectId
 from flask import Blueprint, request, jsonify, current_app
 
 from ..db_operations import get_count_from_db, get_patterns_from_db, search_collection_for_query
-pattern_routes = Blueprint('/patterns', __name__)
+patterns_routes = Blueprint('/patterns', __name__)
 
 # Server all patterns of a specific category, sorted, by the page
-@pattern_routes.route('/patterns', methods=['GET'])
+@patterns_routes.route('/patterns', methods=['GET'])
 def index():
 	# Get all patterns from collection
 	patterns = get_patterns_from_db(current_app.collection)
@@ -51,6 +51,8 @@ def index():
 
 	return jsonify(response)
 
+# Utility, sort a list of patterns by their price field
+# TODO: Deprecate this in favor of MongoDB sorting
 def sort_by_price(patterns, sortBy):
 	for row in patterns:
 		if row['price'][0] != '':
@@ -62,7 +64,7 @@ def sort_by_price(patterns, sortBy):
 	for row in patterns:
 		row['price'] = "${:.2f}".format( row['price'] )
 
-@pattern_routes.route('/patterns/search', methods=['GET'])
+@patterns_routes.route('/patterns/search', methods=['GET'])
 def search_patterns():
 	query = request.args.get('query')
 	if not query:
@@ -82,7 +84,7 @@ def search_patterns():
 	return jsonify(response)
 
 # Delete a pattern by its database ID
-@pattern_routes.route('/patterns/delete/<string:_id>', methods=['DELETE'])
+@patterns_routes.route('/patterns/delete/<string:_id>', methods=['DELETE'])
 def delete_pattern_from_main(_id):
 	pattern = current_app.collection.delete_one({'_id': ObjectId(_id)})
 
@@ -92,7 +94,7 @@ def delete_pattern_from_main(_id):
 	return '', 204
 
 # Return a limit view of patterns, by category, with extra metadata
-@pattern_routes.route('/patterns/summary', methods=['GET'])
+@patterns_routes.route('/patterns/summary', methods=['GET'])
 def get_summary():
 	# Limited View: get param
 	limit = request.args.get('limit')

@@ -6,7 +6,8 @@ from bson import ObjectId
 from .db_operations import get_count_from_db, get_pattern_by_id, get_patterns_from_db, search_collection_for_query, upsert_pattern
 from collections import defaultdict
 from .db_manager import init_db
-from .routes.patterns import pattern_routes
+from .routes.patterns import patterns_routes
+from .routes.pattern import pattern_routes
 
 # move to config file
 # csv_path = 'db.csv'
@@ -39,6 +40,7 @@ def create_app(test_config=None):
 
 	# Register Blueprinted routes
 	app.register_blueprint(pattern_routes)
+	app.register_blueprint(patterns_routes)
 
 	@app.route('/pen', methods=['GET'])
 	def pen_index():
@@ -67,24 +69,6 @@ def create_app(test_config=None):
 
 			return jsonify(patterns)
 
-	# @app.route('/patterns', methods=['GET'])
-	# def get_patterns():
-	# 	with open('db.json', 'r') as file:
-	# 		data = json.load(file)
-
-	# 	return jsonify(data)
-
-	# def get_pattern_by_image(image_name):
-	#     with open(csv_path, 'r', newline='', encoding='utf-8') as csvfile:
-	#         csv_reader = csv.DictReader(csvfile)
-	#         for row in csv_reader:
-	#             if row['Image'] == image_name:
-	#                 return row
-
-	#     # If no matching row is found, return None
-	#     return None
-
-
 	@app.route('/schema', methods=['GET'])
 	def get_filters():
 		# get column names
@@ -93,14 +77,6 @@ def create_app(test_config=None):
 
 		return jsonify(data)
 
-	@app.route('/pattern/<string:_id>', methods=['GET'])
-	def get_pattern(_id):
-		pattern_data = get_pattern_by_id(_id, collection)
-
-		if not pattern_data:
-			return jsonify({'error': 'Pattern not found'}), 404
-		return jsonify(pattern_data)
-
 	@app.route('/pen/pattern/<string:_id>', methods=['GET'])
 	def get_pen_pattern(_id):
 		pattern_data = get_pattern_by_id(_id, pen_collection)
@@ -108,47 +84,6 @@ def create_app(test_config=None):
 		if not pattern_data:
 			return jsonify({'error': 'Pattern not found'}), 404
 		return jsonify(pattern_data)
-
-
-	@app.route('/pattern/new', methods=['POST'])
-	def set_pattern():
-		pattern = request.json
-		
-		print(pattern)
-
-		if not pattern:
-			return jsonify({'error': 'Empty pattern'}), 403
-
-		if pattern:
-			pattern_status = pen_collection.insert_one(pattern)
-			print(pattern_status)
-
-		response = {
-			"ObjectId": str(pattern_status.inserted_id)
-		}
-		
-		return jsonify(response), 201
-
-	@app.route('/pattern/update', methods=['POST'])
-	def update_pattern():
-		old_id = request.args.get('_id')
-		pattern = request.json
-		pattern['id_to_replace'] = ObjectId(old_id)
-		new_pattern = dict((key, value) for key, value in pattern.items() if key != '_id')
-		print(new_pattern)
-
-		if not pattern:
-			return jsonify({'error': 'Empty pattern'}), 403
-
-		if pattern:
-			existing = pen_collection.find_one({'id_to_replace': ObjectId(old_id)})
-			if existing:
-				pattern_status = pen_collection.update_one({'id_to_replace': ObjectId(old_id)}, {'$set': new_pattern})
-			elif not existing:
-				pattern_status = pen_collection.insert_one(new_pattern)
-		
-		# POST does not return anything
-		return '', 201
 
 
 	@app.route('/pen/<string:_id>', methods=['DELETE'])
