@@ -12,12 +12,16 @@ try:
 except:
   print('Error connecting to prod_collection')
 
-print(prod_collection.find_one({}))
-
 def sendbatchToProd():
   patterns = local_collection.find({})
   for pattern in patterns:
-    exists = prod_collection.find_one({'title': pattern['title']})
+    exists = prod_collection.find_one({
+      '$or': [
+        {'title': pattern['title']},
+        {'_id': pattern['_id']}
+      ]
+    })
     if not exists:
       prod_collection.insert_one(pattern)
     
+sendbatchToProd()

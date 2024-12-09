@@ -15,9 +15,6 @@ origins = [
 ]
 
 def init_db(test_config=None):
-	# Get database info from environment for Heroku usage
-	mongo_uri = os.environ.get('MONGODB_URI')
-	db_name = os.environ.get('DB_NAME')
 
 	if test_config is None:
 		mongo_uri = 'mongodb://127.0.0.1:27017'
@@ -31,6 +28,11 @@ def init_db(test_config=None):
 		collection_name = test_config['COLLECTION']
 		pen_name = test_config['PEN_COLLECTION']
 		garbage_name = test_config['GARBAGE_COLLECTION']
+
+	# Get database info from environment for Heroku usage
+	if (os.environ.get('MONGODB_URI')):
+		mongo_uri = os.environ.get('MONGODB_URI')
+		db_name = os.environ.get('DB_NAME')
 
 	# initialize client connection and select database
 	client = MongoClient(mongo_uri)
