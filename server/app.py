@@ -1,13 +1,17 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import json, csv, os
+from flask_login import LoginManager, current_user, login_required
 from pymongo import MongoClient
 from bson import ObjectId
-from .db_operations import get_count_from_db, get_pattern_by_id, get_patterns_from_db, search_collection_for_query, upsert_pattern
+
+from .auth.user import User
+from .db_operations import get_pattern_by_id, get_patterns_from_db, upsert_pattern
 from collections import defaultdict
 from .db_manager import init_db
 from .routes.patterns import patterns_routes
 from .routes.pattern import pattern_routes
+from .auth.auth import login_routes
 
 # move to config file
 # csv_path = 'db.csv'
@@ -34,13 +38,37 @@ def create_app(test_config=None):
 	pen_collection = db_package['PEN']
 	garbage_collection = db_package['GARBAGE']
 
+	# Old style
 	app.collection = collection
 	app.pen_collection = pen_collection
 	app.garbage_collection = garbage_collection
 
+	# New style
+	app.user_collection = db_package['USERS']
+	
+	# Initialize login manager
+	login_manager = LoginManager()
+	login_manager.init_app(app)
+	# Attach login manager as an attribute of the app
+	app.login_manager = login_manager
+
 	# Register Blueprinted routes
 	app.register_blueprint(pattern_routes)
 	app.register_blueprint(patterns_routes)
+	app.register_blueprint(login_routes)
+
+	# Holding zone for user management logic
+	# Define user loader callback
+	@login_manager.user_loader
+	def load_user(user_id):
+		return User.get(user_id, app.user_collection)
+	
+	@app.route('/user/likes/', 'POST')
+	@login_required
+	def add_like():
+		pattern_id = request.args.id
+		current_user.addLike(pattern_id)
+		return jsonify("Success, user added")
 
 	@app.route('/pen', methods=['GET'])
 	def pen_index():

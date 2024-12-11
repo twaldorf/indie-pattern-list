@@ -1,5 +1,6 @@
 from bson import ObjectId
 
+# Pattern operations
 def get_patterns_from_db(collection):
 	patterns = list(collection.find({}).sort('_id', -1))
 	for pattern in patterns:
@@ -19,6 +20,7 @@ def get_pattern_by_id(id, collection):
 
 	return pattern
 
+# Utility to handle BSON IDs on outgoing patterns
 def prepare_outgoing_pattern(pattern):
   pattern['_id'] = str(pattern['_id'])
   if 'id_to_replace' in pattern:
@@ -33,3 +35,13 @@ def search_collection_for_query(query, collection):
     prepare_outgoing_pattern(pattern)
   
   return patterns
+
+# User operations
+def db_get_user_by_id(_id, collection):
+	user = collection.find({'_id': _id})
+
+def db_get_user_by_name(username, collection):
+	return collection.find_one({'username': username})
+
+def create_user(user, collection):
+	collection.insert_one(user)
