@@ -63,7 +63,7 @@ def create_app(test_config=None):
 	def load_user(user_id):
 		return User.get(user_id, app.user_collection)
 	
-	@app.route('/user/likes/', 'POST')
+	@app.route('/user/likes/', methods=['POST'])
 	@login_required
 	def add_like():
 		pattern_id = request.args.id

@@ -39,9 +39,10 @@ def search_collection_for_query(query, collection):
 # User operations
 def db_get_user_by_id(_id, collection):
 	user = collection.find({'_id': _id})
+	return user
 
-def db_get_user_by_name(username, collection):
+def db_get_user_by_username(username, collection):
 	return collection.find_one({'username': username})
 
-def create_user(user, collection):
-	collection.insert_one(user)
+def db_create_user(user, collection):
+	return collection.insert_one({'username': user['username'], 'password_hash': user['password_hash']})

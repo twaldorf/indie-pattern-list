@@ -1,15 +1,50 @@
+from bson import ObjectId
+from flask_login import UserMixin
+from passlib import hash
+from argon2 import PasswordHasher
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from ..db_operations import db_get_user_by_id
 
-class User:
-    def __init__(self, username, password_hash):
+ph = PasswordHasher()
+
+class User(UserMixin):
+    def __init__(self, _id, username, password_hash, content=None):
+        # ObjectID (not a string)
+        self._id = _id
+        # Unique username
         self.username = username
+        # Salted and hashed password
         self.password_hash = password_hash
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-    def get(user_id, collection):
-        return db_get_user_by_id(user_id, collection)
+        # Profile info, settings, likes, edits, collection, reviews, etc.
+        self.content = content
     
+    def get_id(self):
+        return ObjectId.stringify(self._id)
+
+    def get_by_id(_id, collection):
+        user = db_get_user_by_id(_id, collection)
+        return User(
+            username=user['username'], 
+            _id=user['_id'], 
+            password_hash=user['password_hash'], 
+            content=user['content'])
+
+    def get_username(self):
+        return self.username
+    
+    def get_password_hash(self):
+        return self.password_hash
+    
+    # Static method for creating a salted and hashed password for new user creation
+    @staticmethod
+    def hash_password(password):
+        return ph.hash(password)
+        
+    # Static method for authenticating passwords during a log in attempt
+    @staticmethod
+    def check_password(hash, password):
+        verity = ph.verify(password, hash)
+        if verity:
+            return True
+        return False
