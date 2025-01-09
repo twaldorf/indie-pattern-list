@@ -1,5 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import json, csv, os
 from flask_login import LoginManager, current_user, login_required
 from pymongo import MongoClient
@@ -24,7 +26,17 @@ origins = [
 # App Factory for production, debug, and test
 def create_app(test_config=None):
 	app = Flask(__name__)
+
+	app.secret_key = os.environ.get('FLASK_SECRET_KEY')
+
 	CORS(app, resources={r"/*": {"origins": origins}})
+
+	limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://",
+	)
 
 	# TODO: Rewrite all of this
 	# this is bananas noodleman logic
@@ -160,6 +172,7 @@ def create_app(test_config=None):
 	# 	return jsonify(response)
 	
 	# factory makes an app
+	
 	return app
 	
 

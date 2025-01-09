@@ -10,7 +10,7 @@ ph = PasswordHasher()
 
 class User(UserMixin):
     def __init__(self, _id, username, password_hash, content=None):
-        # ObjectID (not a string)
+        # ObjectID as a string
         self._id = _id
         # Unique username
         self.username = username
@@ -18,15 +18,17 @@ class User(UserMixin):
         self.password_hash = password_hash
         # Profile info, settings, likes, edits, collection, reviews, etc.
         self.content = content
+
+    
     
     def get_id(self):
-        return ObjectId.stringify(self._id)
+        return self._id
 
     def get_by_id(_id, collection):
         user = db_get_user_by_id(_id, collection)
         return User(
             username=user['username'], 
-            _id=user['_id'], 
+            _id=str(user['_id']), 
             password_hash=user['password_hash'], 
             content=user['content'])
 
@@ -44,7 +46,7 @@ class User(UserMixin):
     # Static method for authenticating passwords during a log in attempt
     @staticmethod
     def check_password(hash, password):
-        verity = ph.verify(password, hash)
+        verity = ph.verify(hash, password)
         if verity:
             return True
         return False
