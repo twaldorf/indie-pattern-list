@@ -19,18 +19,22 @@ class User(UserMixin):
         # Profile info, settings, likes, edits, collection, reviews, etc.
         self.content = content
 
-    
+    def data(self):
+        data = { "username": self.username }
+        return data
     
     def get_id(self):
         return self._id
 
     def get_by_id(_id, collection):
         user = db_get_user_by_id(_id, collection)
-        return User(
-            username=user['username'], 
-            _id=str(user['_id']), 
-            password_hash=user['password_hash'], 
-            content=user['content'])
+        if user:
+            return User(
+                username=user['username'], 
+                _id=str(user['_id']), 
+                password_hash=user['password_hash'])
+        else:
+            return None
 
     def get_username(self):
         return self.username

@@ -1,13 +1,14 @@
 import hashlib
 from html import escape
 from flask import Blueprint, Flask, current_app, jsonify, request, redirect, url_for
+from flask_cors import CORS
 from flask_login import LoginManager, login_user, login_required, logout_user
 
 from ..db_operations import db_create_user, db_get_user_by_username
 from .user import User
 
 login_routes = Blueprint('auth', __name__)
-# login_manager = current_app.login_manager
+CORS(login_routes, supports_credentials=True)
 
 @login_routes.route('/auth/login', methods=['POST'])
 def login():
@@ -33,13 +34,14 @@ def login():
                     password_hash=user_data['password_hash'], 
                     )
         login_user(user)
-        return jsonify({"message": "User logged in"}), 201
+        return jsonify({"message": "User logged in", "user": user.data()}), 201
     return jsonify({"error": "Invalid credentials"}), 401
 
-@login_routes.route('/logout')
+@login_routes.route('/logout', methods=['POST'])
+@login_required
 def logout():
     logout_user()
-    return redirect(url_for('home'))
+    return jsonify({"message": "User logged out"}), 201
 
 @login_routes.route('/auth/create_user', methods=['POST'])
 def create_user():

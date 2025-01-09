@@ -20,7 +20,8 @@ from .auth.auth import login_routes
 origins = [
 	"https://ips-client.vercel.app",
 	"https://www.superpatternlist.com",
-	"http://localhost:5173"
+	"http://localhost:5173",
+	"http://10.0.0.73:5173"
 ]
 
 # App Factory for production, debug, and test
@@ -28,8 +29,13 @@ def create_app(test_config=None):
 	app = Flask(__name__)
 
 	app.secret_key = os.environ.get('FLASK_SECRET_KEY')
+	app.config.update(
+		SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Strict'
+	)
 
-	CORS(app, resources={r"/*": {"origins": origins}})
+	CORS(app, resources={r"/*": {"origins": origins}}, supports_credentials=True)
 
 	limiter = Limiter(
     get_remote_address,
@@ -69,11 +75,19 @@ def create_app(test_config=None):
 	app.register_blueprint(patterns_routes)
 	app.register_blueprint(login_routes)
 
+
 	# Holding zone for user management logic
 	# Define user loader callback
 	@login_manager.user_loader
 	def load_user(user_id):
-		return User.get(user_id, app.user_collection)
+		return User.get_by_id(user_id, app.user_collection)
+
+	# Untested, unused
+	@app.route('/current_user/', methods=['GET'])
+	@login_required
+	def get_current_user():
+		user = current_user
+		return jsonify(user), 201
 	
 	@app.route('/user/likes/', methods=['POST'])
 	@login_required

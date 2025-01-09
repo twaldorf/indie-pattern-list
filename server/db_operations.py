@@ -38,7 +38,7 @@ def search_collection_for_query(query, collection):
 
 # User operations
 def db_get_user_by_id(_id, collection):
-	user = collection.find({'_id': _id})
+	user = collection.find_one({'_id': ObjectId(_id)})
 	return user
 
 def db_get_user_by_username(username, collection):
