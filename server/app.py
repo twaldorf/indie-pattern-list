@@ -15,19 +15,22 @@ from .routes.patterns import patterns_routes
 from .routes.pattern import pattern_routes
 from .auth.auth import login_routes
 
-# move to config file
-# csv_path = 'db.csv'
-origins = [
-	"https://ips-client.vercel.app",
-	"https://www.superpatternlist.com",
-	"http://localhost:5173",
-	"http://10.0.0.73:5173"
-]
+# Origin configs
+if os.environ.get('ENVIRONMENT') == 'PRODUCTION':
+	origins = ["https://www.superpatternlist.com"]
+else:
+	origins = [
+		"https://ips-client.vercel.app",
+		"http://localhost:5173",
+		"http://10.0.0.73:5173"
+	]
 
 # App Factory for production, debug, and test
 def create_app(test_config=None):
 	app = Flask(__name__)
 
+	# Set up authentication and security config
+	# TODO: add CSRF protection to all routes
 	app.secret_key = os.environ.get('FLASK_SECRET_KEY')
 	app.config.update(
 		SESSION_COOKIE_SECURE=True,
@@ -44,24 +47,15 @@ def create_app(test_config=None):
     storage_uri="memory://",
 	)
 
-	# TODO: Rewrite all of this
-	# this is bananas noodleman logic
+	# Set up database
 	if test_config is None:
 		db_package = init_db()
 	else:
 		db_package = init_db(test_config)
 
-	# TODO: Condense these, include app. prefix in all functions
-	collection = db_package['COLLECTION']
-	pen_collection = db_package['PEN']
-	garbage_collection = db_package['GARBAGE']
-
-	# Old style
-	app.collection = collection
-	app.pen_collection = pen_collection
-	app.garbage_collection = garbage_collection
-
-	# New style
+	app.collection = db_package['COLLECTION']
+	app.pen_collection = db_package['PEN']
+	app.garbage_collection = db_package['GARBAGE']
 	app.user_collection = db_package['USERS']
 	
 	# Initialize login manager
@@ -75,8 +69,8 @@ def create_app(test_config=None):
 	app.register_blueprint(patterns_routes)
 	app.register_blueprint(login_routes)
 
-
 	# Holding zone for user management logic
+	# TODO: Move to generic blueprint
 	# Define user loader callback
 	@login_manager.user_loader
 	def load_user(user_id):
@@ -89,6 +83,7 @@ def create_app(test_config=None):
 		user = current_user
 		return jsonify(user), 201
 	
+	# Untested, unused
 	@app.route('/user/likes/', methods=['POST'])
 	@login_required
 	def add_like():
@@ -96,6 +91,8 @@ def create_app(test_config=None):
 		current_user.addLike(pattern_id)
 		return jsonify("Success, user added")
 
+	# Toolbox routes
+	# TODO: Move to a toolbox blueprint
 	@app.route('/pen', methods=['GET'])
 	def pen_index():
 			# paginate
@@ -122,14 +119,6 @@ def create_app(test_config=None):
 					patterns.sort(key=lambda x: x.get( sortBy, ''))
 
 			return jsonify(patterns)
-
-	@app.route('/schema', methods=['GET'])
-	def get_filters():
-		# get column names
-		with open('schema.json', 'r') as file:
-			data = json.load(file)
-
-		return jsonify(data)
 
 	@app.route('/pen/pattern/<string:_id>', methods=['GET'])
 	def get_pen_pattern(_id):
@@ -166,27 +155,6 @@ def create_app(test_config=None):
 
 		return '', 201
 
-	# @app.route('/patterns/search', methods=['GET'])
-	# def search_patterns():
-	# 	query = request.args.get('query')
-	# 	if not query:
-	# 		return jsonify([])
-		
-	# 	patterns = search_collection_for_query(query, collection)
-	# 	if not patterns:
-	# 		return jsonify([])
-		
-	# 	response = {
-	# 		"data": patterns,
-	# 		"metadata": {
-	# 			"patterns_returned": len(patterns)
-	# 		}
-	# 	}
-
-	# 	return jsonify(response)
-	
-	# factory makes an app
-	
 	return app
 	
 
