@@ -35,10 +35,11 @@ def create_app(test_config=None):
 	app.config.update(
 		SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='Strict'
+    SESSION_COOKIE_SAMESITE='None',
+		SESSION_PROTECTION='Strong',
 	)
 
-	CORS(app, resources={r"/*": {"origins": origins}}, supports_credentials=True)
+	CORS(app, resources={r"/*": {"origins": origins}}, supports_credentials=True, expose_headers='set-cookie')
 
 	limiter = Limiter(
     get_remote_address,
