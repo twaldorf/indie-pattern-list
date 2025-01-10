@@ -1,6 +1,5 @@
 from bson import ObjectId
 from flask_login import UserMixin
-from passlib import hash
 from argon2 import PasswordHasher
 from werkzeug.security import generate_password_hash, check_password_hash
 
