@@ -7,13 +7,13 @@ from flask_login import LoginManager, current_user, login_required
 from pymongo import MongoClient
 from bson import ObjectId
 
-from .auth.user import User
-from .db_operations import get_pattern_by_id, get_patterns_from_db, upsert_pattern
+from server.auth.user import User
+from server.db_operations import get_pattern_by_id, get_patterns_from_db, upsert_pattern
 from collections import defaultdict
-from .db_manager import init_db
-from .routes.patterns import patterns_routes
-from .routes.pattern import pattern_routes
-from .auth.auth import login_routes
+from server.db_manager import init_db
+from server.routes.patterns import patterns_routes
+from server.routes.pattern import pattern_routes
+from server.auth.auth import login_routes
 
 # Origin configs
 if os.environ.get('ENVIRONMENT') == 'PRODUCTION':

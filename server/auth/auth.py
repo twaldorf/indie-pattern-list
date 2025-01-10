@@ -4,8 +4,8 @@ from flask import Blueprint, Flask, current_app, jsonify, request, redirect, url
 from flask_cors import CORS
 from flask_login import LoginManager, login_user, login_required, logout_user
 
-from ..db_operations import db_create_user, db_get_user_by_username
-from .user import User
+from server.db_operations import db_create_user, db_get_user_by_username
+from server.auth.user import User
 
 login_routes = Blueprint('auth', __name__)
 CORS(login_routes, supports_credentials=True)

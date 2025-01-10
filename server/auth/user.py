@@ -4,7 +4,7 @@ from passlib import hash
 from argon2 import PasswordHasher
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from ..db_operations import db_get_user_by_id
+from server.db_operations import db_get_user_by_id
 
 ph = PasswordHasher()
 

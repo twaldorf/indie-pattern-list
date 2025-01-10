@@ -1,6 +1,6 @@
 from bson import ObjectId
 from flask import Blueprint, current_app, jsonify, request
-from ..db_operations import get_pattern_by_id
+from server.db_operations import get_pattern_by_id
 
 pattern_routes = Blueprint('/pattern', __name__)
 
