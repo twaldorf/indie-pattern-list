@@ -46,3 +46,24 @@ def db_get_user_by_username(username, collection):
 
 def db_create_user(user, collection):
 	return collection.insert_one({'username': user['username'], 'password_hash': user['password_hash']})
+
+def db_update_user(user, collection):
+	print(user)
+	return collection.update_one({'_id': user['_id']}, {'$set': {'lists': user['lists']}})
+
+def db_collect_pattern(userId, collection, pid, listName):
+	user = db_get_user_by_id(userId, collection)
+	if user:
+		if not user.get('lists'):
+			user['lists'] = {}
+
+		user['lists'].setdefault(listName, [])
+		user['lists'][listName].append(pid)
+		result = db_update_user(user, collection)
+		return result
+	return False
+
+# def db_get_lists(userId, collection):
+# 	user = db_get_user_by_id(userId, collection)
+# 	if user['lists']:
+

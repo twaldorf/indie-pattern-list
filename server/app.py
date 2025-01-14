@@ -8,7 +8,7 @@ from pymongo import MongoClient
 from bson import ObjectId
 
 from server.auth.user import User
-from server.db_operations import get_pattern_by_id, get_patterns_from_db, upsert_pattern
+from server.db_operations import db_get_user_by_id, get_pattern_by_id, get_patterns_from_db, upsert_pattern
 from collections import defaultdict
 from server.db_manager import init_db
 from server.routes.patterns import patterns_routes
@@ -38,6 +38,12 @@ def create_app(test_config=None):
     SESSION_COOKIE_SAMESITE='Strict',
 		SESSION_PROTECTION='Strong',
 	)
+
+	if os.environ.get('ENVIRONMENT') != 'PRODUCTION':
+		app.config.update(SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE=None,
+		SESSION_PROTECTION='Strong')
 
 	CORS(app, resources={r"/*": {"origins": origins}}, supports_credentials=True, expose_headers='set-cookie')
 
@@ -82,15 +88,28 @@ def create_app(test_config=None):
 	@login_required
 	def get_current_user():
 		user = current_user
+		print(user)
 		return jsonify(user), 201
 	
-	# Untested, unused
-	@app.route('/user/likes/', methods=['POST'])
+	@app.route('/user/list', methods=['POST'])
 	@login_required
-	def add_like():
-		pattern_id = request.args.id
-		current_user.addLike(pattern_id)
-		return jsonify("Success, user added")
+	def save_to_collection():
+		print('saving to collection')
+		pattern_id = request.json['pattern_id']
+		print(pattern_id)
+		# collection = request.args.collection
+		result = current_user.collect_pattern(pid=pattern_id, collection=app.user_collection)
+		if result:
+			return jsonify("Success, pattern added to list")
+		
+	@app.route('/user/lists', methods=['GET'])
+	def get_lists_by_user():
+		user_id = request.json['user_id']
+		result = db_get_user_by_id(user_id, app.user_collection)['lists']
+		if result:
+			return jsonify(result), 201
+		else:
+			return jsonify("No lists or no user found")
 
 	# Toolbox routes
 	# TODO: Move to a toolbox blueprint

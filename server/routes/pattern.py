@@ -1,5 +1,6 @@
 from bson import ObjectId
 from flask import Blueprint, current_app, jsonify, request
+from flask_login import login_required
 from server.db_operations import get_pattern_by_id
 
 pattern_routes = Blueprint('/pattern', __name__)
@@ -13,6 +14,7 @@ def get_pattern(_id):
 	return jsonify(pattern_data)
 
 @pattern_routes.route('/pattern/new', methods=['POST'])
+@login_required
 def set_pattern():
 	pattern = request.json
 	
@@ -32,6 +34,7 @@ def set_pattern():
 	return jsonify(response), 201
 
 @pattern_routes.route('/pattern/update', methods=['POST'])
+@login_required
 def update_pattern():
 	old_id = request.args.get('_id')
 	pattern = request.json

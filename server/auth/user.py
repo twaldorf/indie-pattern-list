@@ -3,12 +3,12 @@ from flask_login import UserMixin
 from argon2 import PasswordHasher
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from server.db_operations import db_get_user_by_id
+from server.db_operations import db_collect_pattern, db_get_user_by_id
 
 ph = PasswordHasher()
 
 class User(UserMixin):
-    def __init__(self, _id, username, password_hash, content=None):
+    def __init__(self, _id, username, password_hash, lists=None, content=None):
         # ObjectID as a string
         self._id = _id
         # Unique username
@@ -16,10 +16,13 @@ class User(UserMixin):
         # Salted and hashed password
         self.password_hash = password_hash
         # Profile info, settings, likes, edits, collection, reviews, etc.
+        self.lists = lists
         self.content = content
 
     def data(self):
-        data = { "username": self.username }
+        data = { 
+            "username": self.username,
+             "lists": self.lists }
         return data
     
     def get_id(self):
@@ -31,7 +34,8 @@ class User(UserMixin):
             return User(
                 username=user['username'], 
                 _id=str(user['_id']), 
-                password_hash=user['password_hash'])
+                password_hash=user['password_hash'],
+                lists=user.get('lists'))
         else:
             return None
 
@@ -40,6 +44,10 @@ class User(UserMixin):
     
     def get_password_hash(self):
         return self.password_hash
+    
+    def collect_pattern(self, pid, collection):
+        success = db_collect_pattern(self.get_id(), collection, pid, "My List")
+        return success
     
     # Static method for creating a salted and hashed password for new user creation
     @staticmethod

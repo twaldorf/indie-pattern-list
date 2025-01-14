@@ -31,7 +31,8 @@ def login():
     if valid:
         user = User(_id=str(user_data['_id']), 
                     username=user_data['username'], 
-                    password_hash=user_data['password_hash'], 
+                    password_hash=user_data['password_hash'],
+                    lists=user_data.get('lists')
                     )
         login_user(user)
         return jsonify({"message": "User logged in", "user": user.data()}), 201
