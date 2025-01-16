@@ -47,12 +47,15 @@ def create_app(test_config=None):
 
 	CORS(app, resources={r"/*": {"origins": origins}}, supports_credentials=True, expose_headers='set-cookie')
 
+
 	limiter = Limiter(
     get_remote_address,
     app=app,
     default_limits=["200 per day", "50 per hour"],
     storage_uri="memory://",
 	)
+	if os.environ.get('ENVIRONMENT') != 'PRODUCTION':
+		app.config.update(RATELIMIT_ENABLED=False)
 
 	# Set up database
 	if test_config is None:
@@ -91,16 +94,14 @@ def create_app(test_config=None):
 		print(user)
 		return jsonify(user), 201
 	
+	# TODO: remove like route
 	@app.route('/user/list', methods=['POST'])
 	@login_required
 	def save_to_collection():
-		print('saving to collection')
 		pattern_id = request.json['pattern_id']
-		print(pattern_id)
-		# collection = request.args.collection
 		result = current_user.collect_pattern(pid=pattern_id, collection=app.user_collection)
 		if result:
-			return jsonify("Success, pattern added to list")
+			return jsonify({"message": "Success, pattern added to list", "data": current_user.data().get('lists')})
 		
 	@app.route('/user/lists', methods=['GET'])
 	def get_lists_by_user():

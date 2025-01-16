@@ -11,7 +11,7 @@ login_routes = Blueprint('auth', __name__)
 CORS(login_routes, supports_credentials=True)
 
 @login_routes.route('/auth/login', methods=['POST'])
-def login():
+def login(remember=True):
     # Validate content type, prevent CSRF
     if not request.is_json:
         return jsonify({"error": "Invalid content type"}), 400
@@ -23,10 +23,14 @@ def login():
 
     user_data = db_get_user_by_username(username, current_app.user_collection)
 
+
     try:
         valid = User.check_password(user_data['password_hash'], password)
     except:
         valid = False
+
+    if not user_data:
+        return jsonify({"error": "Invalid credentials"}), 403
 
     if valid:
         user = User(_id=str(user_data['_id']), 
@@ -36,7 +40,7 @@ def login():
                     )
         login_user(user)
         return jsonify({"message": "User logged in", "user": user.data()}), 201
-    return jsonify({"error": "Invalid credentials"}), 401
+    return jsonify({"error": "Invalid credentials"}), 403
 
 @login_routes.route('/logout', methods=['POST'])
 @login_required

@@ -19,6 +19,14 @@ class User(UserMixin):
         self.lists = lists
         self.content = content
 
+    def __update(self, collection):
+        user = db_get_user_by_id(self._id, collection)
+        if user:
+            self.lists=user.get('lists')
+            return True
+        else:
+            return False
+
     def data(self):
         data = { 
             "username": self.username,
@@ -47,6 +55,7 @@ class User(UserMixin):
     
     def collect_pattern(self, pid, collection):
         success = db_collect_pattern(self.get_id(), collection, pid, "My List")
+        self.__update(collection=collection)
         return success
     
     # Static method for creating a salted and hashed password for new user creation

@@ -45,6 +45,8 @@ def db_get_user_by_username(username, collection):
 	return collection.find_one({'username': username})
 
 def db_create_user(user, collection):
+	if (db_get_user_by_username(user.get('username'), collection)):
+		return "User already exists"
 	return collection.insert_one({'username': user['username'], 'password_hash': user['password_hash']})
 
 def db_update_user(user, collection):
@@ -58,6 +60,8 @@ def db_collect_pattern(userId, collection, pid, listName):
 			user['lists'] = {}
 
 		user['lists'].setdefault(listName, [])
+		if pid in user['lists'][listName]:
+			return True
 		user['lists'][listName].append(pid)
 		result = db_update_user(user, collection)
 		return result

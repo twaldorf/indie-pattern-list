@@ -2,7 +2,7 @@ from collections import defaultdict
 from bson import ObjectId
 from flask import Blueprint, request, jsonify, current_app
 
-from ..db_operations import get_count_from_db, get_patterns_from_db, search_collection_for_query
+from server.db_operations import db_get_user_by_id, db_get_user_by_username, get_count_from_db, get_pattern_by_id, get_patterns_from_db, search_collection_for_query
 patterns_routes = Blueprint('/patterns', __name__)
 
 # Server all patterns of a specific category, sorted, by the page
@@ -83,15 +83,36 @@ def search_patterns():
 
 	return jsonify(response)
 
-# Delete a pattern by its database ID
-@patterns_routes.route('/patterns/delete/<string:_id>', methods=['DELETE'])
-def delete_pattern_from_main(_id):
-	pattern = current_app.collection.delete_one({'_id': ObjectId(_id)})
-
-	if not pattern:
-		return jsonify({'error': 'Pattern not found'}), 404
+@patterns_routes.route('/user/likes', methods=['GET'])
+def get_patterns_by_user_likes():
+	username = request.args.get('username')
+	if not username:
+		return jsonify({"error": "Missing user_id field"}), 404
+	user = db_get_user_by_username(username, current_app.user_collection)
+	patterns = []
+	for pattern_id in user.get('lists').get('My List'):
+		patterns.append(get_pattern_by_id(pattern_id, collection=current_app.collection))
 	
-	return '', 204
+	# TODO: abstract this into a bundle builder function
+	bundle = {
+		"data": patterns,
+		"metadata": {
+			"patterns_returned": len(patterns)
+		}
+	}
+	return jsonify(bundle)
+	
+
+# Delete a pattern by its database ID
+# This is crazy, don't put this in prod
+# @patterns_routes.route('/patterns/delete/<string:_id>', methods=['DELETE'])
+# def delete_pattern_from_main(_id):
+# 	pattern = current_app.collection.delete_one({'_id': ObjectId(_id)})
+
+# 	if not pattern:
+# 		return jsonify({'error': 'Pattern not found'}), 404
+	
+# 	return '', 204
 
 # Return a limit view of patterns, by category, with extra metadata
 @patterns_routes.route('/patterns/summary', methods=['GET'])
