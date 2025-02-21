@@ -1,2 +1,7 @@
 Flask
-
+gunicorn
+flask-cors
+pymongo
+flask-login
+flask-limiter
+argon2-cffi
