@@ -17,7 +17,8 @@ from server.auth.auth import login_routes
 
 # Origin configs
 if os.environ.get('ENVIRONMENT') == 'PRODUCTION':
-	origins = ["https://patterns.flatland.studio", "https://flatland.studio"]
+	origins = os.environ.get('CORS_ORIGINS').split(',')
+	# origins = ["https://patterns.flatland.studio", "https://flatland.studio"]
 else:
 	origins = [
 		"https://ips-client.vercel.app",
