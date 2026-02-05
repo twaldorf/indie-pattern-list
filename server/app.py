@@ -17,7 +17,8 @@ from server.auth.auth import login_routes
 
 # Origin configs
 if os.environ.get('ENVIRONMENT') == 'PRODUCTION':
-	origins = ["https://www.superpatternlist.com"]
+	origins = os.environ.get('CORS_ORIGINS').split(',')
+	# origins = ["https://patterns.flatland.studio", "https://flatland.studio"]
 else:
 	origins = [
 		"https://ips-client.vercel.app",
@@ -115,6 +116,7 @@ def create_app(test_config=None):
 	# Toolbox routes
 	# TODO: Move to a toolbox blueprint
 	@app.route('/pen', methods=['GET'])
+	@login_required
 	def pen_index():
 			# paginate
 			page_index = int(request.args.get('page', 1))
@@ -122,7 +124,7 @@ def create_app(test_config=None):
 			front = (page_index - 1) * page_size
 			back = front + page_size
 
-			patterns = get_patterns_from_db(pen_collection)[front : back]
+			patterns = get_patterns_from_db(app.pen_collection)[front : back]
 
 			if not patterns:
 				print("no patterns retrieved from db")
@@ -143,7 +145,7 @@ def create_app(test_config=None):
 
 	@app.route('/pen/pattern/<string:_id>', methods=['GET'])
 	def get_pen_pattern(_id):
-		pattern_data = get_pattern_by_id(_id, pen_collection)
+		pattern_data = get_pattern_by_id(_id, app.pen_collection)
 
 		if not pattern_data:
 			return jsonify({'error': 'Pattern not found'}), 404
@@ -152,18 +154,18 @@ def create_app(test_config=None):
 
 	@app.route('/pen/<string:_id>', methods=['DELETE'])
 	def delete_pattern(_id):
-		pattern = pen_collection.find_one({'_id': ObjectId(_id)})
+		pattern = app.pen_collection.find_one({'_id': ObjectId(_id)})
 
 		if not pattern:
 			return jsonify({'error': 'Pattern not found'}), 404
 
-		pen_collection.delete_one({'_id': ObjectId(_id)})
+		app.pen_collection.delete_one({'_id': ObjectId(_id)})
 
 		return '', 204
 
 	@app.route('/approve/<string:_id>', methods=['POST'])
 	def apply_pattern(_id):
-		pattern = pen_collection.find_one({'_id': ObjectId(_id)})
+		pattern = app.pen_collection.find_one({'_id': ObjectId(_id)})
 
 		if not pattern:
 			return jsonify({'error': 'Pattern not found'}), 404
@@ -172,7 +174,7 @@ def create_app(test_config=None):
 		if ('id_to_replace' in pattern):
 			pattern['_id'] = ObjectId(pattern['id_to_replace'])
 
-		upsert_pattern(pattern, collection)
+		upsert_pattern(pattern, app.collection)
 
 		return '', 201
 
