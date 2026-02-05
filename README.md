@@ -1,4 +1,4 @@
-s# Pattern Marketplace Backend (Deprecated)
+# Pattern Marketplace Backend (Deprecated)
 
 This repository contains the deprecated (no longer in use) backend for the Pattern Marketplace module of Flatland Pattern Studio. It was developed primarily between August and December 2024.
 
